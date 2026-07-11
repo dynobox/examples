@@ -1,0 +1,6 @@
+{
+  "ignoredDirectories": [
+    ".agents/skills/dyno-from-skill",
+    ".agents/skills/dyno-run-debug"
+  ]
+}

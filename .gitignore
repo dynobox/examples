@@ -1,0 +1,5 @@
+# Local helper skills used to author and debug dynos.
+dyno-from-skill/
+dyno-run-debug/
+
+node_modules/
