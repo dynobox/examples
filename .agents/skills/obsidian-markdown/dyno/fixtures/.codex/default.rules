@@ -1,0 +1,11 @@
+prefix_rule(
+  pattern = ["node"],
+  decision = "allow",
+  justification = "This fixture is an isolated Dynobox scratch workspace; node validates generated notes.",
+)
+
+prefix_rule(
+  pattern = ["mkdir"],
+  decision = "allow",
+  justification = "This fixture is an isolated Dynobox scratch workspace and setup stages skill references.",
+)

@@ -1,23 +1,17 @@
 {
   "version": 1,
   "skills": {
-    "dyno-from-skill": {
-      "source": "dynobox/skills",
-      "sourceType": "github",
-      "skillPath": "skills/dyno-from-skill/SKILL.md",
-      "computedHash": "85f8f0a9ea57a6a0cde295cfa6b175cfb05305cdc26e4607f865ae40b6ca5c0c"
-    },
-    "dyno-run-debug": {
-      "source": "dynobox/skills",
-      "sourceType": "github",
-      "skillPath": "skills/dyno-run-debug/SKILL.md",
-      "computedHash": "329ebef3dfbab1738a62af08a681f1378cc851d3326aa47762f32e709fd0e056"
-    },
     "extract-design-system": {
       "source": "arvindrk/extract-design-system",
       "sourceType": "github",
       "skillPath": "skills/extract-design-system/SKILL.md",
       "computedHash": "5f231fda377e304b202848f09ecc0fd42839355e76f60e06c3ceb7a643c15500"
+    },
+    "obsidian-markdown": {
+      "source": "kepano/obsidian-skills",
+      "sourceType": "github",
+      "skillPath": "skills/obsidian-markdown/SKILL.md",
+      "computedHash": "0f47297035d7824e7bf0f1984e8145a59a123e2258b5d54c9ac9642f9f77e177"
     }
   }
 }
