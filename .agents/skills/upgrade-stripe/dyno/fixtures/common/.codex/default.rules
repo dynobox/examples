@@ -1,0 +1,17 @@
+prefix_rule(
+  pattern = ["node"],
+  decision = "allow",
+  justification = "This fixture is an isolated Dynobox scratch workspace; node runs local checks.",
+)
+
+prefix_rule(
+  pattern = ["npm", "test"],
+  decision = "allow",
+  justification = "This fixture is an isolated Dynobox scratch workspace; npm test runs local tests without installing packages.",
+)
+
+prefix_rule(
+  pattern = ["go", "test"],
+  decision = "allow",
+  justification = "This fixture is an isolated Dynobox scratch workspace; go test runs standard-library-only tests.",
+)
