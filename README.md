@@ -38,6 +38,17 @@ and decision-record notes. It verifies parsed frontmatter, wikilinks, embeds,
 callouts, collapsible content, block IDs, hidden comments, and connected Mermaid
 flow while allowing only the requested note to be created.
 
+### web-search
+
+Source: <https://github.com/ogulcancelik/agent-skills/tree/main/skills/web-search>
+
+`web-search/dyno/web-search.dyno.mjs` demonstrates the core research workflow
+with a deterministic CLI fixture. It verifies that the agent consults the
+skill, uses the bundled CLI by absolute path, searches before fetching selected
+results with the returned result-set ID, avoids `./web-search.js`, and cites a
+URL from a fetched fixture result. It tests the agent workflow, not live browser
+or search-engine behavior.
+
 ## Authoring
 
 Validate a dyno without invoking a harness:
