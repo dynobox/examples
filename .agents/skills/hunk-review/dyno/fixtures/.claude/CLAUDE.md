@@ -1,0 +1,1 @@
+Skills are located in .agents/skills/. Read the SKILL.md in the relevant skill directory before proceeding. For Hunk tasks, invoke the isolated fixture as ./hunk and never run hunk from PATH because it may connect to an external session.

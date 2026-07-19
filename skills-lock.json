@@ -7,6 +7,12 @@
       "skillPath": "skills/extract-design-system/SKILL.md",
       "computedHash": "5f231fda377e304b202848f09ecc0fd42839355e76f60e06c3ceb7a643c15500"
     },
+    "hunk-review": {
+      "source": "modem-dev/hunk",
+      "sourceType": "github",
+      "skillPath": "skills/hunk-review/SKILL.md",
+      "computedHash": "ee2110b33c1d0f208e8635c7848ca715373bfc62b105cc90c93d1d849c1ca2ef"
+    },
     "obsidian-markdown": {
       "source": "kepano/obsidian-skills",
       "sourceType": "github",

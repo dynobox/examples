@@ -1,0 +1,192 @@
+#!/usr/bin/env node
+
+const fs = require("node:fs");
+
+const args = process.argv.slice(2);
+const scenario = fs.existsSync(".hunk-scenario")
+  ? fs.readFileSync(".hunk-scenario", "utf8").trim()
+  : "review";
+
+const isCommand = (...parts) =>
+  parts.every((part, index) => args[index] === part);
+
+if (isCommand("session", "list")) {
+  if (scenario === "no-session") {
+    if (args.includes("--json")) {
+      console.log(JSON.stringify({ sessions: [] }));
+    } else {
+      console.log("No active Hunk sessions");
+    }
+    process.exit(0);
+  }
+
+  console.log(
+    JSON.stringify({
+      sessions: [
+        {
+          sessionId: "review-1",
+          path: process.cwd(),
+          repo: process.cwd(),
+          source: "diff",
+          fileCount: 2,
+        },
+      ],
+    }),
+  );
+  process.exit(0);
+}
+
+if (scenario === "no-session" && args[0] === "session") {
+  console.error("No active Hunk sessions");
+  process.exit(1);
+}
+
+if (isCommand("session", "get")) {
+  console.log(`Session: review-1
+Path: ${process.cwd()}
+Repo: ${process.cwd()}
+Source: diff`);
+  process.exit(0);
+}
+
+if (isCommand("session", "review")) {
+  const files = [
+    {
+      path: "src/auth.js",
+      hunks: [{ number: 1, oldStart: 10, newStart: 10 }],
+    },
+    {
+      path: "src/jobs.js",
+      hunks: [{ number: 1, oldStart: 21, newStart: 21 }],
+    },
+  ];
+
+  if (args.includes("--include-patch")) {
+    files[0].hunks[0].patch = [
+      "@@ -10,4 +10,4 @@ function canManage(user) {",
+      "-  return user.role === 'admin';",
+      "+  return (user.role = 'admin');",
+      " }",
+    ].join("\n");
+    files[1].hunks[0].patch = [
+      "@@ -21,5 +21,5 @@ async function runJobs(items) {",
+      "   await Promise.all(items.map(async (item) => {",
+      "-    await processItem(item);",
+      "+    processItem(item);",
+      "   }));",
+    ].join("\n");
+  }
+
+  console.log(JSON.stringify({ sessionId: "review-1", files }, null, 2));
+  process.exit(0);
+}
+
+if (isCommand("session", "context")) {
+  console.log(
+    JSON.stringify({
+      sessionId: "review-1",
+      file: "src/auth.js",
+      hunk: 1,
+      noteMarkupWidth: 72,
+    }),
+  );
+  process.exit(0);
+}
+
+if (isCommand("session", "navigate")) {
+  fs.writeFileSync(
+    ".hunk-navigation.json",
+    `${JSON.stringify({ args }, null, 2)}\n`,
+  );
+  console.log("Navigated to requested hunk");
+  process.exit(0);
+}
+
+if (isCommand("session", "comment", "apply")) {
+  if (!args.includes("--stdin")) {
+    console.error("Pass --stdin to read batch comments from stdin JSON.");
+    process.exit(2);
+  }
+
+  const payload = JSON.parse(fs.readFileSync(0, "utf8"));
+  if (!Array.isArray(payload.comments) || payload.comments.length === 0) {
+    console.error("A non-empty comments array is required.");
+    process.exit(2);
+  }
+
+  for (const comment of payload.comments) {
+    const targets = ["hunk", "hunkNumber", "oldLine", "newLine"].filter(
+      (key) => comment[key] !== undefined,
+    );
+    if (!comment.filePath || !comment.summary || targets.length !== 1) {
+      console.error("Each comment needs filePath, summary, and one target.");
+      process.exit(2);
+    }
+  }
+
+  fs.writeFileSync(
+    ".hunk-comments.json",
+    `${JSON.stringify(payload, null, 2)}\n`,
+  );
+  console.log(JSON.stringify({ applied: payload.comments.length }));
+  process.exit(0);
+}
+
+if (isCommand("session", "comment", "list")) {
+  const payload = fs.existsSync(".hunk-comments.json")
+    ? JSON.parse(fs.readFileSync(".hunk-comments.json", "utf8"))
+    : { comments: [] };
+  console.log(JSON.stringify(payload, null, 2));
+  process.exit(0);
+}
+
+if (isCommand("session", "comment", "add")) {
+  const valueAfter = (flag) => {
+    const index = args.indexOf(flag);
+    return index === -1 ? undefined : args[index + 1];
+  };
+  const filePath = valueAfter("--file");
+  const summary = valueAfter("--summary");
+  const oldLine = valueAfter("--old-line");
+  const newLine = valueAfter("--new-line");
+
+  if (!filePath || !summary || (oldLine === undefined) === (newLine === undefined)) {
+    console.error("comment add needs file, summary, and exactly one line target.");
+    process.exit(2);
+  }
+
+  const payload = fs.existsSync(".hunk-comments.json")
+    ? JSON.parse(fs.readFileSync(".hunk-comments.json", "utf8"))
+    : { comments: [] };
+  payload.comments.push({
+    filePath,
+    summary,
+    ...(oldLine === undefined
+      ? { newLine: Number(newLine) }
+      : { oldLine: Number(oldLine) }),
+  });
+  fs.writeFileSync(
+    ".hunk-comments.json",
+    `${JSON.stringify(payload, null, 2)}\n`,
+  );
+  console.log(JSON.stringify({ id: `comment-${payload.comments.length}` }));
+  process.exit(0);
+}
+
+if (isCommand("session", "reload")) {
+  const separator = args.indexOf("--");
+  if (separator === -1 || !args[separator + 1]) {
+    console.error("Pass the replacement Hunk command after `--`");
+    process.exit(2);
+  }
+
+  fs.writeFileSync(
+    ".hunk-reload.json",
+    `${JSON.stringify({ args }, null, 2)}\n`,
+  );
+  console.log("Reloaded live session");
+  process.exit(0);
+}
+
+console.error(`Unsupported deterministic Hunk command: ${args.join(" ")}`);
+process.exit(2);

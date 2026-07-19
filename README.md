@@ -29,6 +29,21 @@ generation and extraction-only mode against `https://dynobox.xyz/`. It verifies
 the required command, valid and non-empty JSON outputs, CSS custom properties,
 preservation of existing styles, and a summary of colors, fonts, and limitations.
 
+### hunk-review
+
+Source: <https://github.com/modem-dev/hunk/tree/main/skills/hunk-review>
+
+`hunk-review/dyno/hunk-review.dyno.mjs` uses a deterministic Hunk CLI fixture to
+cover no-session handling, structure-first review, navigation before inline
+comments, the prohibition on launching the interactive TUI, and tracked-only
+session reloads. It tests the agent workflow without requiring a live Hunk daemon.
+
+The fixture is copied into each isolated workspace as `./hunk`. It returns the
+configured session and patch data, records comment payloads in
+`.hunk-comments.json`, and records reload arguments in `.hunk-reload.json`.
+Close any host Hunk sessions before running this dyno: assertions catch use of a
+PATH-resolved `hunk` only after that command could have reached a real daemon.
+
 ### obsidian-markdown
 
 Source: <https://github.com/kepano/obsidian-skills>
