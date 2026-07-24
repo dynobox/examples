@@ -1,6 +1,6 @@
-# Dynobox Skill Dynos
+# Example Skill Dynos
 
-This repository evaluates agent skills in isolated Dynobox workspaces. Dynos
+This repository evaluates popular agent skills in isolated Dynobox workspaces. Dynos
 assert observable commands, generated artifacts, preservation of inputs, and
 the final response rather than only harness completion.
 
