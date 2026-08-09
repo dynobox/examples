@@ -8,16 +8,10 @@ import {
   skill,
   verify,
 } from "@dynobox/sdk";
+import { hunkMock } from "./helpers/hunk-mock.mjs";
 
 const doesNotLaunchTui = command.notCalled("hunk", {
   originalMatches: /^(?:.*[\\/])?hunk\s+(?:diff|show)(?:\s|$)/,
-});
-
-// Each scenario supplies a deterministic ./hunk fixture. Keep host Hunk
-// sessions closed while running this dyno: this assertion detects a bare hunk
-// command only after it could have controlled a real daemon.
-const doesNotUsePathHunk = command.notCalled("hunk", {
-  originalMatches: /^hunk\s+session(?:\s|$)/,
 });
 
 export default defineDyno({
@@ -40,8 +34,9 @@ export default defineDyno({
       id: "no-active-session",
       name: "asks the user to launch Hunk when no session exists",
       prompt:
-        "Read .agents/skills/hunk-review/SKILL.md, then review the current changes with Hunk. Run every Hunk command through ./hunk, never hunk from PATH.",
-      setup: ["chmod +x hunk && printf 'no-session\n' > .hunk-scenario"],
+        "Read .agents/skills/hunk-review/SKILL.md, then review the current changes with Hunk. The Hunk CLI is available on PATH as hunk.",
+      setup: ["printf 'no-session\n' > .review-mode"],
+      cliMocks: { hunk: hunkMock },
       assertions: [
         skill.referenced("hunk-review"),
         command.called("hunk", { argsInOrder: ["session", "list"] }),
@@ -49,10 +44,7 @@ export default defineDyno({
           argsInOrder: ["session", "comment"],
         }),
         doesNotLaunchTui,
-        // The fixture owns the empty session list used by this scenario.
-        doesNotUsePathHunk,
         finalMessage.contains("Hunk"),
-        finalMessage.contains("terminal"),
         finalMessage.contains("session"),
       ],
     },
@@ -60,8 +52,9 @@ export default defineDyno({
       id: "review-and-batch-comments",
       name: "inspects structure and annotates review issues",
       prompt:
-        "Read .agents/skills/hunk-review/SKILL.md, then review the live Hunk session and annotate any issues you find. Run every Hunk command through ./hunk, never hunk from PATH.",
-      setup: ["chmod +x hunk && printf 'review\n' > .hunk-scenario"],
+        "Read .agents/skills/hunk-review/SKILL.md, then review the live Hunk session and annotate any issues you find. The Hunk CLI is available on PATH as hunk.",
+      setup: ["printf 'review\n' > .review-mode"],
+      cliMocks: { hunk: hunkMock },
       assertions: [
         skill.referenced("hunk-review"),
         sequence.inOrder([
@@ -86,13 +79,10 @@ export default defineDyno({
           }),
         ]),
         doesNotLaunchTui,
-        // The comment artifacts below are emitted only by the ./hunk fixture.
-        doesNotUsePathHunk,
         artifact.exists(".hunk-comments.json"),
         artifact.contains(".hunk-comments.json", "src/auth.js"),
         artifact.contains(".hunk-comments.json", "src/jobs.js"),
-        // The fixture records comment add/apply payloads here; this verifies the
-        // simulated session received exactly two notes without using a daemon.
+        // The mock records the simulated session's two expected review notes.
         verify.succeeds(
           "node -e \"const comments = JSON.parse(require('node:fs').readFileSync('.hunk-comments.json', 'utf8')).comments; if (comments.length !== 2) throw new Error('expected exactly two review comments')\"",
         ),
@@ -102,8 +92,9 @@ export default defineDyno({
       id: "tracked-changes-only",
       name: "reloads a session without untracked files",
       prompt:
-        "Read .agents/skills/hunk-review/SKILL.md, then update the live Hunk review to show tracked changes only. Run every Hunk command through ./hunk, never hunk from PATH.",
-      setup: ["chmod +x hunk && printf 'reload\n' > .hunk-scenario"],
+        "Read .agents/skills/hunk-review/SKILL.md, then update the live Hunk review to show tracked changes only. The Hunk CLI is available on PATH as hunk.",
+      setup: ["printf 'reload\n' > .review-mode"],
+      cliMocks: { hunk: hunkMock },
       assertions: [
         skill.referenced("hunk-review"),
         sequence.inOrder([
@@ -120,8 +111,7 @@ export default defineDyno({
           }),
         ]),
         doesNotLaunchTui,
-        // The reload artifact below is the fixture's record of the nested command.
-        doesNotUsePathHunk,
+        // The mock records the nested replacement command.
         artifact.exists(".hunk-reload.json"),
         artifact.contains(".hunk-reload.json", "--exclude-untracked"),
       ],

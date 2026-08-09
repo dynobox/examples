@@ -25,24 +25,21 @@ The suite uses the Claude Code and Codex harnesses with pinned models.
 Source: <https://github.com/arvindrk/extract-design-system>
 
 `extract-design-system/dyno/extract-design-system.dyno.mjs` covers starter-token
-generation and extraction-only mode against `https://dynobox.xyz/`. It verifies
-the required command, valid and non-empty JSON outputs, CSS custom properties,
-preservation of existing styles, and a summary of colors, fonts, and limitations.
+generation and extraction-only mode against `https://dynobox.xyz/`. A
+scenario-scoped `npx` mock makes browser installation and extraction deterministic
+while verifying the required commands, valid and non-empty JSON outputs, CSS
+custom properties, preservation of existing styles, and a summary of colors,
+fonts, and limitations.
 
 ### hunk-review
 
 Source: <https://github.com/modem-dev/hunk/tree/main/skills/hunk-review>
 
-`hunk-review/dyno/hunk-review.dyno.mjs` uses a deterministic Hunk CLI fixture to
+`hunk-review/dyno/hunk-review.dyno.mjs` uses a scenario-scoped Hunk CLI mock to
 cover no-session handling, structure-first review, navigation before inline
 comments, the prohibition on launching the interactive TUI, and tracked-only
-session reloads. It tests the agent workflow without requiring a live Hunk daemon.
-
-The fixture is copied into each isolated workspace as `./hunk`. It returns the
-configured session and patch data, records comment payloads in
-`.hunk-comments.json`, and records reload arguments in `.hunk-reload.json`.
-Close any host Hunk sessions before running this dyno: assertions catch use of a
-PATH-resolved `hunk` only after that command could have reached a real daemon.
+session reloads. It tests the agent workflow without requiring a live Hunk daemon
+or a fixture executable.
 
 ### obsidian-markdown
 

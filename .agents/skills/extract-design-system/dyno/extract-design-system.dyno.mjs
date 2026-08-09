@@ -7,6 +7,7 @@ import {
   skill,
   verify,
 } from "@dynobox/sdk";
+import { extractDesignSystemMock } from "./helpers/extract-design-system-mock.mjs";
 
 const summaryAssertions = [
   anyOf([finalMessage.contains("color"), finalMessage.contains("Color")]),
@@ -48,14 +49,12 @@ export default defineDyno({
       setup: [
         "mkdir -p src && printf ':root { --existing-brand: #123456; }\\n' > src/styles.css",
       ],
+      cliMocks: { npx: extractDesignSystemMock },
       assertions: [
         skill.referenced("extract-design-system"),
-        anyOf([
-          command.called("npx", {
-            argsInOrder: ["playwright", "install", "chromium"],
-          }),
-          verify.succeeds("npx playwright install --list | grep -q chromium"),
-        ]),
+        command.called("npx", {
+          argsInOrder: ["playwright", "install", "chromium"],
+        }),
         command.called("npx", {
           argsInOrder: ["extract-design-system", "https://dynobox.xyz/"],
         }),
@@ -101,6 +100,7 @@ export default defineDyno({
       setup: [
         "mkdir -p src && printf ':root { --existing-brand: #123456; }\\n' > src/styles.css",
       ],
+      cliMocks: { npx: extractDesignSystemMock },
       assertions: [
         skill.referenced("extract-design-system"),
         command.called("npx", {

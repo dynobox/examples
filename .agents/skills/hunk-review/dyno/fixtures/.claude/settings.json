@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(./hunk *)",
-      "Bash(printf *)",
-      "Bash(node *)"
-    ]
-  }
-}

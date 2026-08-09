@@ -6,6 +6,6 @@
     "dynobox": "dynobox run"
   },
   "devDependencies": {
-    "dynobox": "^0.10.0"
+    "dynobox": "^0.11.1"
   }
 }
