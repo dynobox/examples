@@ -16,7 +16,7 @@ For harness output and retained debug artifacts:
 npm run dynobox -- --debug
 ```
 
-The suite uses the Claude Code and Codex harnesses with pinned models.
+The suite uses the Claude Code, Codex, and OpenCode harnesses.
 
 ## Coverage
 
@@ -49,6 +49,15 @@ Source: <https://github.com/kepano/obsidian-skills>
 and decision-record notes. It verifies parsed frontmatter, wikilinks, embeds,
 callouts, collapsible content, block IDs, hidden comments, and connected Mermaid
 flow while allowing only the requested note to be created.
+
+### show-me
+
+Source: <https://github.com/humanlayer/skills/tree/main/plugins/show-me/skills/show-me>
+
+`show-me/dyno/show-me.dyno.mjs` covers focused pseudocode, Mermaid sequence
+diagrams, and responsive HTML visualizations. It verifies the selected visual
+format, preserves the source fixtures, creates and opens the HTML artifact, and
+checks its essential document structure and responsive metadata.
 
 ### web-search
 
