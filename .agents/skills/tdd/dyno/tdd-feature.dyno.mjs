@@ -5,89 +5,80 @@ import {
   dyno,
   sequence,
   skill,
+  transcript,
   verify,
 } from "@dynobox/sdk";
 
-// Path helpers that resolve relative to this file.
 const here = dyno.here(import.meta.url);
 
-// This dyno is in .agents/skills/tdd/, so Dynobox copies the tdd SKILL.md into
-// each scenario work directory. The agent can find the skill there.
 export default defineDyno({
-  name: "[tdd] builds a feature test-first",
+  name: "TDD: Build a feature",
   target: "tdd",
-
-  // Each scenario runs once on each of these harnesses.
   harnesses: [
     { id: "claude-code", model: "sonnet", permissionMode: "dangerous" },
-    // Dynobox cannot set reasoning effort. Codex reads it from
-    // ~/.codex/config.toml (model_reasoning_effort = "medium").
     { id: "codex", model: "gpt-5.6-terra", permissionMode: "dangerous" },
     { id: "cursor", permissionMode: "dangerous" },
     { id: "antigravity", permissionMode: "dangerous" },
   ],
-
   scenarios: [
     {
       id: "slugify-feature",
-      name: "implements slugify with a red-green loop",
-
-      // Copies fixtures/slugify/ into the work directory before the agent
-      // starts. It has a package.json and a src/slugify.js stub that throws.
+      name: "Build URL slugs test-first",
       fixtures: here.fixtures("slugify"),
-
-      // The skill tells the agent to confirm the seam with the user before it
-      // writes tests. Nobody can answer during a dyno run, so the prompt
-      // agrees the seam up front.
+      // Dynobox stages SKILL.md before scenario setup; copy its linked guides.
+      setup: [
+        `cp ${here.q("../tests.md")} .agents/skills/tdd/tests.md`,
+        `cp ${here.q("../mocking.md")} .agents/skills/tdd/mocking.md`,
+      ],
+      // Agree the public interface up front so a headless run can proceed.
       prompt: [
-        "Use the tdd skill to implement slugify(text) in src/slugify.js.",
-        "slugify lowercases the text, trims surrounding whitespace, and replaces each run of spaces with one hyphen.",
-        "The seam is agreed: the exported slugify function.",
-        "Write the tests in test/slugify.test.js with node:test and run them with `node --test`.",
-        "Do not install packages. Do not ask questions.",
+        "Read .agents/skills/tdd/SKILL.md and use the tdd skill to implement slugify(text) in src/slugify.js.",
+        "Lowercase the text, trim surrounding whitespace, and replace each run of spaces with one hyphen.",
+        'For example, "  Ship It  Now  " should become "ship-it-now".',
+        "The agreed seam is the exported slugify function.",
+        "Write tests beside it in src/slugify.test.js using node:test.",
+        "Run tests with `node --test --test-reporter=tap`.",
+        "Do not install packages. You have approval to proceed without further questions.",
       ].join(" "),
-
-      // Each assertion gets a label, which the report shows in place of the
-      // default description.
       assertions: [
-        // Passes when the agent opens the tdd SKILL.md.
-        { ...skill.referenced("tdd"), label: "reads the tdd skill" },
-
-        // A red-green loop runs the tests at least twice: once to see the new
-        // test fail, and once to see it pass. This checks that the two runs
-        // occurred, in order. It does not check their results.
+        {
+          ...skill.referenced("tdd"),
+          id: "skill",
+          label: "Reads the TDD skill",
+        },
         {
           ...sequence.inOrder([
             command.called("node", { args: ["--test"] }),
             command.called("node", { args: ["--test"] }),
           ]),
-          label: "runs the tests at least twice (red → green)",
+          id: "test-runs",
+          label: "Runs tests during development",
         },
-
-        // Artifact assertions read the work directory after the agent stops.
+        // TAP failure output is simple evidence; it does not prove edit order.
         {
-          ...artifact.exists("test/slugify.test.js"),
-          label: "writes the test file",
+          ...transcript.contains("not ok"),
+          id: "failing-test",
+          label: "Reports a failing test",
         },
-
-        // Verify commands also run in the work directory after the agent
-        // stops. Each one passes when its command exits with 0.
+        {
+          ...artifact.exists("src/slugify.test.js"),
+          id: "tests",
+          label: "Creates tests beside the code",
+        },
         {
           ...verify.succeeds("node --test"),
-          label: "ends with a passing suite",
+          id: "passing-suite",
+          label: "Final test suite passes",
         },
-
-        // The agent wrote its own tests, so a separate script checks slugify
-        // against the spec.
         {
-          ...verify.succeeds(`node ${here.q("./helpers/verify-slugify.mjs")}`),
-          label: "slugify passes an independent spec check",
+          ...verify.succeeds(`node ${here.q("helpers/verify-slugify.mjs")}`),
+          id: "behavior",
+          label: "Slugs match the specification",
         },
-
-        // The task needs only node:test, so there must be no node_modules.
         {
           ...artifact.notExists("node_modules"),
-          label: "installs no packages",
+          id: "dependencies",
+          label: "Uses no installed dependencies",
         },
       ],
     },
