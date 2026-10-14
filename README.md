@@ -59,6 +59,24 @@ diagrams, and responsive HTML visualizations. It verifies the selected visual
 format, preserves the source fixtures, creates and opens the HTML artifact, and
 checks its essential document structure and responsive metadata.
 
+### tdd
+
+Source: <https://github.com/mattpocock/skills/tree/main/skills/engineering/tdd>
+
+Two dynos cover the red-green loop on Claude Code, Codex, Cursor, and
+Antigravity. Each prompt agrees the seam up front, because the skill otherwise
+stops to confirm it with the user.
+
+- `tdd/dyno/tdd-feature.dyno.mjs` asks the agent to build `slugify(text)`
+  test-first against a stubbed module.
+- `tdd/dyno/tdd-bugfix.dyno.mjs` reports a bug in `parseDuration("1h30m")`,
+  whose existing tests all pass, and asks the agent to fix it.
+
+Both verify that the agent reads the skill, runs `node --test` at least twice
+(red, then green), ends with a passing suite, passes an independent check of
+the final behavior, and installs no packages. The bug-fix dyno also checks that
+the agent adds a test for the reported case and keeps the existing tests.
+
 ### web-search
 
 Source: <https://github.com/ogulcancelik/agent-skills/tree/main/skills/web-search>
