@@ -17,7 +17,7 @@ const absoluteCall = (matcher) => anyOf([
 ]);
 
 export default defineDyno({
-  name: "web-search: searches and cites sources",
+  name: "[web-search] searches and cites sources",
   target: "web-search",
   harnesses: [
     { id: "claude-code", model: "haiku", permissionMode: "dangerous" },

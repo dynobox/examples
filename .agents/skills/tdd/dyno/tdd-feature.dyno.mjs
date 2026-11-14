@@ -12,7 +12,7 @@ import {
 const here = dyno.here(import.meta.url);
 
 export default defineDyno({
-  name: "tdd: builds a feature",
+  name: "[tdd] builds a feature",
   target: "tdd",
   harnesses: [
     { id: "claude-code", model: "haiku", permissionMode: "dangerous" },

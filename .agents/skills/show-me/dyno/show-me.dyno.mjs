@@ -11,7 +11,7 @@ import {
 const here = dyno.here(import.meta.url);
 
 export default defineDyno({
-  name: "show-me: explains topics visually",
+  name: "[show-me] explains topics visually",
   target: "show-me",
   harnesses: [
     { id: "claude-code", model: "haiku", permissionMode: "dangerous" },

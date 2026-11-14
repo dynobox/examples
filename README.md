@@ -82,8 +82,8 @@ or search-engine behavior.
 
 ## Authoring
 
-Use `<skill>: <description>` for the dyno name, with a lowercase action such as
-`tdd: fixes a bug`. Set the target to the skill directory name, such as `tdd`.
+Use `[skill] description` for the dyno name, with a lowercase action such as
+`[tdd] fixes a bug`. Set the target to the skill directory name, such as `tdd`.
 Dynos for the same skill share a target and use different descriptions.
 
 Validate a dyno without invoking a harness:

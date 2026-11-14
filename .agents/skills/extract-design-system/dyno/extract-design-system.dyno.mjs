@@ -31,7 +31,7 @@ const summaryAssertions = [
 ];
 
 export default defineDyno({
-  name: "extract-design-system: extracts design primitives",
+  name: "[extract-design-system] extracts design primitives",
   target: "extract-design-system",
   harnesses: [
     { id: "claude-code", model: "haiku", permissionMode: "dangerous" },
