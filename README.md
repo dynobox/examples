@@ -82,17 +82,15 @@ or search-engine behavior.
 
 ## Authoring
 
+Use `<skill>: <description>` for the dyno name, with a lowercase action such as
+`tdd: fixes a bug`. Set the target to the skill directory name, such as `tdd`.
+Dynos for the same skill share a target and use different descriptions.
+
 Validate a dyno without invoking a harness:
 
 ```sh
 node --check path/to/test.dyno.mjs
 npx dynobox validate path/to/test.dyno.mjs
-```
-
-Run the mock and assertion helper regression tests without invoking a harness:
-
-```sh
-node --test .agents/skills/*/dyno/helpers/*.test.mjs
 ```
 
 Dynobox stages the authored `SKILL.md` in both `.agents` and `.claude` skill

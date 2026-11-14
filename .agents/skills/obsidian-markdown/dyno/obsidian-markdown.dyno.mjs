@@ -20,7 +20,7 @@ import { createSetup } from "./helpers/setup.mjs";
 const here = dyno.here(import.meta.url);
 
 export default defineDyno({
-  name: "[obsidian-markdown] creates Obsidian notes",
+  name: "obsidian-markdown: creates Obsidian notes",
   target: "obsidian-markdown",
   setup: createSetup(here),
   harnesses: [

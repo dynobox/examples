@@ -15,7 +15,7 @@ const doesNotLaunchTui = command.notCalled("hunk", {
 });
 
 export default defineDyno({
-  name: "[hunk-review] controls live review sessions",
+  name: "hunk-review: reviews live sessions",
   target: "hunk-review",
   harnesses: [
     { id: "claude-code", model: "haiku", permissionMode: "dangerous" },
