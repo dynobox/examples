@@ -18,14 +18,21 @@ export default defineDyno({
   name: "[hunk-review] controls live review sessions",
   target: "hunk-review",
   harnesses: [
+    { id: "claude-code", model: "haiku", permissionMode: "dangerous" },
+    { id: "codex", model: "gpt-6-luna", permissionMode: "dangerous" },
     {
-      id: "claude-code",
-      model: "sonnet",
+      id: "opencode",
+      model: "openai/gpt-6-luna",
       permissionMode: "dangerous",
     },
     {
-      id: "codex",
-      model: "gpt-5.4-mini",
+      id: "pi",
+      model: "anthropic/claude-haiku-5-5",
+      permissionMode: "dangerous",
+    },
+    {
+      id: "antigravity",
+      model: "gemini-3.8-flash-low",
       permissionMode: "dangerous",
     },
   ],

@@ -1,24 +1,35 @@
 import {
+  anyOf,
   command,
   defineDyno,
+  dyno,
   finalMessage,
-  sequence,
   skill,
-  tool,
+  verify,
 } from "@dynobox/sdk";
+
+const here = dyno.here(import.meta.url);
+const absoluteScript = /^(?:\/|\$PWD\/|\$\{PWD\}\/|\$\(pwd\)\/).*\/web-search\.js$/;
+const absoluteInvocation = /(?:^|[\s"'])(?:\/|\$PWD\/|\$\{PWD\}\/|\$\(pwd\)\/).*\/web-search\.js/;
+const absoluteCall = (matcher) => anyOf([
+  command.called("web-search.js", { ...matcher, originalMatches: absoluteInvocation }),
+  command.called("node", { ...matcher, argsMatching: [absoluteScript] }),
+]);
 
 export default defineDyno({
   name: "[web-search] searches and cites fetched sources",
   target: "web-search",
   harnesses: [
+    { id: "claude-code", model: "haiku", permissionMode: "dangerous" },
+    { id: "codex", model: "gpt-6-luna", permissionMode: "dangerous" },
     {
-      id: "claude-code",
-      model: "sonnet",
+      id: "pi",
+      model: "anthropic/claude-haiku-5-5",
       permissionMode: "dangerous",
     },
     {
-      id: "codex",
-      model: "gpt-5.4-mini",
+      id: "antigravity",
+      model: "gemini-3.8-flash-low",
       permissionMode: "dangerous",
     },
   ],
@@ -32,22 +43,11 @@ export default defineDyno({
       assertions: [
         // The harness must consult the skill instructions before researching.
         skill.referenced("web-search"),
-        // The CLI must be invoked from the absolute skill directory.
-        command.called("web-search.js", {
-          originalMatches:
-            /(?:^|\s)(?:\/|\$PWD\/|\$\{PWD\}\/|\$\(pwd\)\/).*\/web-search\.js/,
-        }),
-        // The caller's project-relative entry point is explicitly forbidden.
-        tool.notCalled("shell", {
-          matches: "(?:^|\\s)\\./web-search\\.js(?:\\s|$)",
-        }),
-        // Fetching numbered results requires the ID returned by the search.
-        sequence.inOrder([
-          command.called("web-search.js", { args: ["passkeys"] }),
-          command.called("web-search.js", {
-            argsInOrder: ["--from", "passkey-results", "--fetch", "1,2"],
-          }),
-        ]),
+        // Both research calls require an absolute path, including Node invocation.
+        absoluteCall({ args: ["passkeys"] }),
+        absoluteCall({ argsInOrder: ["--from", "passkey-results", "--fetch", "1,2"] }),
+        // Actual fixture calls establish order, including nested shell execution.
+        verify.succeeds(`node ${here.q("./helpers/verify-search-calls.mjs")}`),
         // The response must cite a URL returned by the fetched fixture result.
         finalMessage.contains("https://example.test/passkeys-overview"),
       ],

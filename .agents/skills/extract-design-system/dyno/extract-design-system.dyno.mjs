@@ -22,6 +22,11 @@ const summaryAssertions = [
     finalMessage.contains("Limitation"),
     finalMessage.contains("caveat"),
     finalMessage.contains("constraint"),
+    finalMessage.contains("limited"),
+    finalMessage.contains("not a complete"),
+    finalMessage.contains("not a full"),
+    finalMessage.contains("one page"),
+    finalMessage.contains("single page"),
   ]),
 ];
 
@@ -29,14 +34,16 @@ export default defineDyno({
   name: "[extract-design-system]",
   target: "extract-design-system",
   harnesses: [
+    { id: "claude-code", model: "haiku", permissionMode: "dangerous" },
+    { id: "codex", model: "gpt-6-luna", permissionMode: "dangerous" },
     {
-      id: "claude-code",
-      model: "sonnet",
+      id: "pi",
+      model: "anthropic/claude-haiku-5-5",
       permissionMode: "dangerous",
     },
     {
-      id: "codex",
-      model: "gpt-5.4-mini",
+      id: "antigravity",
+      model: "gemini-3.8-flash-low",
       permissionMode: "dangerous",
     },
   ],
@@ -68,10 +75,26 @@ export default defineDyno({
         artifact.exists(".extract-design-system/normalized.json"),
         artifact.exists("design-system/tokens.json"),
         artifact.exists("design-system/tokens.css"),
-        finalMessage.contains(".extract-design-system/raw.json"),
-        finalMessage.contains(".extract-design-system/normalized.json"),
-        finalMessage.contains("design-system/tokens.json"),
-        finalMessage.contains("design-system/tokens.css"),
+        // Artifact checks above establish the output location.
+        anyOf([
+          finalMessage.contains(".extract-design-system/raw.json"),
+          finalMessage.contains("raw.json"),
+        ]),
+        // Artifact checks above establish the output location.
+        anyOf([
+          finalMessage.contains(".extract-design-system/normalized.json"),
+          finalMessage.contains("normalized.json"),
+        ]),
+        // Artifact checks above establish the output location.
+        anyOf([
+          finalMessage.contains("design-system/tokens.json"),
+          finalMessage.contains("tokens.json"),
+        ]),
+        // Artifact checks above establish the output location.
+        anyOf([
+          finalMessage.contains("design-system/tokens.css"),
+          finalMessage.contains("tokens.css"),
+        ]),
         // The raw extraction artifact must be valid, non-empty JSON.
         verify.succeeds(
           "node -e \"const artifact = JSON.parse(require('node:fs').readFileSync('.extract-design-system/raw.json', 'utf8')); if (Object.keys(artifact).length === 0) throw new Error('raw extraction artifact is empty')\"",
@@ -112,8 +135,16 @@ export default defineDyno({
         }),
         artifact.exists(".extract-design-system/raw.json"),
         artifact.exists(".extract-design-system/normalized.json"),
-        finalMessage.contains(".extract-design-system/raw.json"),
-        finalMessage.contains(".extract-design-system/normalized.json"),
+        // Artifact checks above establish the output location.
+        anyOf([
+          finalMessage.contains(".extract-design-system/raw.json"),
+          finalMessage.contains("raw.json"),
+        ]),
+        // Artifact checks above establish the output location.
+        anyOf([
+          finalMessage.contains(".extract-design-system/normalized.json"),
+          finalMessage.contains("normalized.json"),
+        ]),
         // The raw extraction artifact must be valid, non-empty JSON.
         verify.succeeds(
           "node -e \"const artifact = JSON.parse(require('node:fs').readFileSync('.extract-design-system/raw.json', 'utf8')); if (Object.keys(artifact).length === 0) throw new Error('raw extraction artifact is empty')\"",

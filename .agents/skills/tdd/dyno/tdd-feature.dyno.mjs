@@ -1,11 +1,11 @@
 import {
   artifact,
-  command,
   defineDyno,
   dyno,
   sequence,
   skill,
   transcript,
+  tool,
   verify,
 } from "@dynobox/sdk";
 
@@ -15,10 +15,19 @@ export default defineDyno({
   name: "TDD: Build a feature",
   target: "tdd",
   harnesses: [
-    { id: "claude-code", model: "sonnet", permissionMode: "dangerous" },
-    { id: "codex", model: "gpt-5.6-terra", permissionMode: "dangerous" },
-    { id: "cursor", permissionMode: "dangerous" },
-    { id: "antigravity", permissionMode: "dangerous" },
+    { id: "claude-code", model: "haiku", permissionMode: "dangerous" },
+    { id: "codex", model: "gpt-6-luna", permissionMode: "dangerous" },
+    { id: "cursor", model: "composer-2.5", permissionMode: "dangerous" },
+    {
+      id: "antigravity",
+      model: "gemini-3.8-flash-low",
+      permissionMode: "dangerous",
+    },
+    {
+      id: "pi",
+      model: "anthropic/claude-haiku-5-5",
+      permissionMode: "dangerous",
+    },
   ],
   scenarios: [
     {
@@ -48,8 +57,9 @@ export default defineDyno({
         },
         {
           ...sequence.inOrder([
-            command.called("node", { args: ["--test"] }),
-            command.called("node", { args: ["--test"] }),
+            // Raw shell matching also sees test commands after heredocs.
+            tool.called("shell", { matches: String.raw`(?:^|[\s"';&|])(?:[^\s"';&|]+/)?node\s+--test(?:[\s"']|$)` }),
+            tool.called("shell", { matches: String.raw`(?:^|[\s"';&|])(?:[^\s"';&|]+/)?node\s+--test(?:[\s"']|$)` }),
           ]),
           id: "test-runs",
           label: "Runs tests during development",

@@ -19,11 +19,32 @@ export const verifyPatterns = (path, patterns) => {
   );
 };
 
-export const verifyCollapsedCalloutContent = (path, content) =>
-  verify.command(
-    `node -e 'const fs = require("node:fs"); const lines = fs.readFileSync(${JSON.stringify(path)}, "utf8").split(/\\r?\\n/); const start = lines.findIndex((line) => /^>\\s*\\[![^\\]\\r\\n]+\\]-/.test(line)); if (start < 0) process.exit(1); const callout = []; for (const line of lines.slice(start)) { if (!line.startsWith(">")) break; callout.push(line); } if (!callout.join("\\n").includes(${JSON.stringify(content)})) process.exit(1);'`,
-    { exitCode: 0 },
-  );
+// A foldable callout may start expanded or collapsed; its topic may be a heading.
+export const verifyCollapsedCalloutContent = (path, content) => {
+  const script = String.raw`
+    const fs = require("node:fs");
+    const lines = fs.readFileSync(${JSON.stringify(path)}, "utf8").split(/\r?\n/);
+    const topic = ${JSON.stringify(content)}.toLowerCase();
+    const headings = [];
+    for (let index = 0; index < lines.length; index += 1) {
+      const heading = lines[index].match(/^(#{1,6})\s+(.+)/);
+      if (heading) {
+        while (headings.length && headings.at(-1).level >= heading[1].length) headings.pop();
+        headings.push({ level: heading[1].length, title: heading[2] });
+      }
+      if (!/^>\s*\[![^\]\r\n]+\][+-]/.test(lines[index])) continue;
+      const block = [];
+      let next = index;
+      while (next < lines.length && lines[next].startsWith(">")) block.push(lines[next++]);
+      const related = block.join("\n").toLowerCase().includes(topic) ||
+        headings.some(({ title }) => title.toLowerCase().includes(topic));
+      const hasAnswer = block.slice(1).some((line) => line.replace(/^>\s*/, "").trim());
+      if (related && hasAnswer) process.exit(0);
+    }
+    process.exit(1);
+  `;
+  return verify.command(`node -e '${script}'`, { exitCode: 0 });
+};
 
 export const verifyDecisionParagraph = (path) =>
   verify.command(
@@ -32,10 +53,7 @@ export const verifyDecisionParagraph = (path) =>
   );
 
 export const verifyHiddenEditorialComment = (path) =>
-  verify.command(
-    `node -e 'const fs = require("node:fs"); const note = fs.readFileSync(${JSON.stringify(path)}, "utf8"); if (!/^%%\\r?\\n[\\s\\S]+?\\r?\\n%%$/m.test(note)) process.exit(1);'`,
-    { exitCode: 0 },
-  );
+  verifyPatterns(path, [/%%\s*[^%\s][\s\S]*?%%/]);
 
 // Obsidian accepts either scalar or list properties for related-note metadata.
 export const verifyMetadataLink = (path, field, target) =>

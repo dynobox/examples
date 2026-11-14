@@ -2,7 +2,14 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 export const extractDesignSystemMock = {
-  handler: async ({ argv, cwd }) => {
+  handler: async ({ argv: rawArgv, cwd }) => {
+    const argv = [...rawArgv];
+    while (["--yes", "-y", "--no-install"].includes(argv[0])) argv.shift();
+    if (argv[0] === "--") argv.shift();
+
+    if (argv[0] === "extract-design-system" && argv.slice(1).some((arg) => ["--help", "-h"].includes(arg))) {
+      return { exitCode: 0, stdout: "Usage: extract-design-system <url> [--extract-only]" };
+    }
     if (
       argv[0] === "playwright" &&
       argv[1] === "install" &&
@@ -11,8 +18,16 @@ export const extractDesignSystemMock = {
       return { exitCode: 0, stdout: "Chromium installed" };
     }
 
-    if (argv[0] !== "extract-design-system" || !argv[1]) {
-      return { exitCode: 1, stderr: "Expected extract-design-system <url>" };
+    const args = argv.slice(1);
+    const target = args.find((arg) => !arg.startsWith("-"));
+    let url;
+    try { url = new URL(target); } catch { /* Invalid targets are rejected below. */ }
+    if (
+      argv[0] !== "extract-design-system" ||
+      !url || !["http:", "https:"].includes(url.protocol) ||
+      args.some((arg) => arg !== target && arg !== "--extract-only")
+    ) {
+      return { exitCode: 1, stderr: "Expected extract-design-system <http(s) URL> [--extract-only]" };
     }
 
     const tokens = {

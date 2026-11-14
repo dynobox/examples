@@ -16,7 +16,8 @@ For harness output and retained debug artifacts:
 npm run dynobox -- --debug
 ```
 
-The suite uses the Claude Code, Codex, and OpenCode harnesses.
+All dynos use the Claude Code, Codex, Pi, and Antigravity (AGY) harnesses.
+Some dynos also use OpenCode or Cursor.
 
 ## Coverage
 
@@ -64,7 +65,7 @@ checks its essential document structure and responsive metadata.
 Source: <https://github.com/mattpocock/skills/tree/main/skills/engineering/tdd>
 
 Two dynos test feature development with `slugify(text)` and a bug fix for
-`parseDuration("1h30m")` on Claude Code, Codex, Cursor, and AGY. They check skill
+`parseDuration("1h30m")` on Claude Code, Codex, Pi, Cursor, and AGY. They check skill
 use, test runs, failure output, passing tests, and the final behavior. The bug-fix
 dyno also checks that the existing tests stay unchanged.
 
@@ -86,6 +87,12 @@ Validate a dyno without invoking a harness:
 ```sh
 node --check path/to/test.dyno.mjs
 npx dynobox validate path/to/test.dyno.mjs
+```
+
+Run the mock and assertion helper regression tests without invoking a harness:
+
+```sh
+node --test .agents/skills/*/dyno/helpers/*.test.mjs
 ```
 
 Dynobox stages the authored `SKILL.md` in both `.agents` and `.claude` skill

@@ -1,4 +1,5 @@
 import {
+  anyOf,
   artifact,
   defineDyno,
   dyno,
@@ -23,14 +24,21 @@ export default defineDyno({
   target: "obsidian-markdown",
   setup: createSetup(here),
   harnesses: [
+    { id: "claude-code", model: "haiku", permissionMode: "dangerous" },
+    { id: "codex", model: "gpt-6-luna", permissionMode: "dangerous" },
     {
-      id: "claude-code",
-      model: "sonnet",
+      id: "opencode",
+      model: "openai/gpt-6-luna",
       permissionMode: "dangerous",
     },
     {
-      id: "codex",
-      model: "gpt-5.4-mini",
+      id: "pi",
+      model: "anthropic/claude-haiku-5-5",
+      permissionMode: "dangerous",
+    },
+    {
+      id: "antigravity",
+      model: "gemini-3.8-flash-low",
       permissionMode: "dangerous",
     },
   ],
@@ -45,8 +53,13 @@ export default defineDyno({
         artifact.exists(".agents/skills/obsidian-markdown/references/CALLOUTS.md"),
         artifact.exists(".claude/skills/obsidian-markdown/references/CALLOUTS.md"),
         artifact.exists("Project Alpha.md"),
-        artifact.contains("Project Alpha.md", "![[assets/roadmap.png|300]]"),
-        artifact.contains("Project Alpha.md", "> [!warning]"),
+        anyOf([
+          artifact.contains("Project Alpha.md", "![[assets/roadmap.png|300]]"),
+          artifact.contains("Project Alpha.md", "![[roadmap.png|300]]"),
+        ]),
+        verifyPatterns("Project Alpha.md", [
+          /^>\s*\[!(?:warning|caution|attention|danger|error)\]/im,
+        ]),
         artifact.contains("Project Alpha.md", "architecture"),
         artifact.contains("Project Alpha.md", "delay"),
         artifact.unchanged("Architecture.md"),

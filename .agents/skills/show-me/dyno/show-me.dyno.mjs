@@ -14,18 +14,21 @@ export default defineDyno({
   name: "[show-me] explains topics visually",
   target: "show-me",
   harnesses: [
-    {
-      id: "claude-code",
-      model: "sonnet",
-      permissionMode: "dangerous",
-    },
-    {
-      id: "codex",
-      model: "gpt-5.4-mini",
-      permissionMode: "dangerous",
-    },
+    { id: "claude-code", model: "haiku", permissionMode: "dangerous" },
+    { id: "codex", model: "gpt-6-luna", permissionMode: "dangerous" },
     {
       id: "opencode",
+      model: "openai/gpt-6-luna",
+      permissionMode: "dangerous",
+    },
+    {
+      id: "pi",
+      model: "anthropic/claude-haiku-5-5",
+      permissionMode: "dangerous",
+    },
+    {
+      id: "antigravity",
+      model: "gemini-3.8-flash-low",
       permissionMode: "dangerous",
     },
   ],

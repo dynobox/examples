@@ -1,6 +1,19 @@
 #!/usr/bin/env node
 
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 const args = process.argv.slice(2);
+if (args.some((arg) => ["--help", "-h", "--version"].includes(arg))) {
+  console.log("Usage: web-search.js <query> | --from <result-set-id> --fetch <indices>");
+  process.exit(0);
+}
+// Anchor records at the fixture workspace even when the agent changes directory.
+const record = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..", ".web-search-calls.json");
+const calls = fs.existsSync(record) ? JSON.parse(fs.readFileSync(record, "utf8")) : [];
+calls.push(args);
+fs.writeFileSync(record, JSON.stringify(calls));
 
 if (args.includes("--from")) {
   console.log("## Passkeys overview");
