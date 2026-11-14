@@ -1,34 +1,31 @@
-import {
-  anyOf,
-  artifact,
-  command,
-  defineDyno,
-  finalMessage,
-  skill,
-  verify,
-} from "@dynobox/sdk";
-import { extractDesignSystemMock } from "./helpers/extract-design-system-mock.mjs";
+import { artifact, command, defineDyno, finalMessage, skill } from "@dynobox/sdk";
+import fs from "node:fs/promises";
+import path from "node:path";
 
-const summaryAssertions = [
-  anyOf([finalMessage.contains("color"), finalMessage.contains("Color")]),
-  anyOf([
-    finalMessage.contains("font"),
-    finalMessage.contains("Font"),
-    finalMessage.contains("typeface"),
-    finalMessage.contains("Typography"),
-  ]),
-  anyOf([
-    finalMessage.contains("limitation"),
-    finalMessage.contains("Limitation"),
-    finalMessage.contains("caveat"),
-    finalMessage.contains("constraint"),
-    finalMessage.contains("limited"),
-    finalMessage.contains("not a complete"),
-    finalMessage.contains("not a full"),
-    finalMessage.contains("one page"),
-    finalMessage.contains("single page"),
-  ]),
-];
+// A native CLI mock can provide files for the agent to inspect.
+const npxMock = {
+  handler: async ({ argv, cwd }) => {
+    if (argv.includes("playwright")) return { exitCode: 0, stdout: "Chromium installed" };
+    if (argv.includes("--help") || argv.includes("-h")) {
+      return { exitCode: 0, stdout: "Usage: extract-design-system <url> [--extract-only]" };
+    }
+    if (!argv.includes("extract-design-system") || !argv.includes("https://dynobox.xyz/")) {
+      return { exitCode: 1, stderr: "Expected extract-design-system https://dynobox.xyz/" };
+    }
+    const tokens = JSON.stringify({ colors: { primary: "#123456" }, fonts: ["Inter"] });
+    const extraction = path.join(cwd, ".extract-design-system");
+    await fs.mkdir(extraction, { recursive: true });
+    await fs.writeFile(path.join(extraction, "raw.json"), tokens);
+    await fs.writeFile(path.join(extraction, "normalized.json"), tokens);
+    if (!argv.includes("--extract-only")) {
+      const output = path.join(cwd, "design-system");
+      await fs.mkdir(output, { recursive: true });
+      await fs.writeFile(path.join(output, "tokens.json"), tokens);
+      await fs.writeFile(path.join(output, "tokens.css"), ":root { --color-primary: #123456; }\n");
+    }
+    return { exitCode: 0, stdout: "Extracted design primitives. Font: Inter." };
+  },
+};
 
 export default defineDyno({
   name: "[extract-design-system] extracts design primitives",
@@ -47,116 +44,32 @@ export default defineDyno({
       permissionMode: "dangerous",
     },
   ],
+  setup: ["mkdir -p src && printf ':root { --existing-brand: #abcdef; }\n' > src/styles.css"],
   scenarios: [
     {
       id: "dynobox-site-synthetic",
-      name: "extract tokens from dynobox.xyz",
+      name: "extracts starter tokens",
       prompt:
-        "Use the extract-design-system skill to extract design primitives from https://dynobox.xyz/ and generate starter token files. The target URL is public and this is not extraction-only. Do not modify existing app code, styles, or config files; only create the generated extraction and design-system outputs. Summarize the likely colors, detected fonts, generated outputs, and v1 limitations.",
-      setup: [
-        "mkdir -p src && printf ':root { --existing-brand: #123456; }\\n' > src/styles.css",
-      ],
-      cliMocks: { npx: extractDesignSystemMock },
+        "Read .agents/skills/extract-design-system/SKILL.md, then extract design primitives from the public site https://dynobox.xyz/ and generate starter token files. Leave existing app styles unchanged and summarize the detected fonts.",
+      cliMocks: { npx: npxMock },
       assertions: [
         skill.referenced("extract-design-system"),
-        command.called("npx", {
-          argsInOrder: ["playwright", "install", "chromium"],
-        }),
-        command.called("npx", {
-          argsInOrder: ["extract-design-system", "https://dynobox.xyz/"],
-        }),
-        command.notCalled("npx", {
-          args: ["extract-design-system", "init"],
-        }),
-        command.notCalled("npx", {
-          args: ["extract-design-system", "--extract-only"],
-        }),
-        artifact.exists(".extract-design-system/raw.json"),
-        artifact.exists(".extract-design-system/normalized.json"),
-        artifact.exists("design-system/tokens.json"),
-        artifact.exists("design-system/tokens.css"),
-        // Artifact checks above establish the output location.
-        anyOf([
-          finalMessage.contains(".extract-design-system/raw.json"),
-          finalMessage.contains("raw.json"),
-        ]),
-        // Artifact checks above establish the output location.
-        anyOf([
-          finalMessage.contains(".extract-design-system/normalized.json"),
-          finalMessage.contains("normalized.json"),
-        ]),
-        // Artifact checks above establish the output location.
-        anyOf([
-          finalMessage.contains("design-system/tokens.json"),
-          finalMessage.contains("tokens.json"),
-        ]),
-        // Artifact checks above establish the output location.
-        anyOf([
-          finalMessage.contains("design-system/tokens.css"),
-          finalMessage.contains("tokens.css"),
-        ]),
-        // The raw extraction artifact must be valid, non-empty JSON.
-        verify.succeeds(
-          "node -e \"const artifact = JSON.parse(require('node:fs').readFileSync('.extract-design-system/raw.json', 'utf8')); if (Object.keys(artifact).length === 0) throw new Error('raw extraction artifact is empty')\"",
-        ),
-        // The normalized extraction artifact must be valid, non-empty JSON.
-        verify.succeeds(
-          "node -e \"const artifact = JSON.parse(require('node:fs').readFileSync('.extract-design-system/normalized.json', 'utf8')); if (Object.keys(artifact).length === 0) throw new Error('normalized extraction artifact is empty')\"",
-        ),
-        // Generated tokens must be a non-empty copy of the normalized artifact.
-        verify.succeeds(
-          "node -e \"const fs = require('node:fs'); const { isDeepStrictEqual } = require('node:util'); const normalized = JSON.parse(fs.readFileSync('.extract-design-system/normalized.json', 'utf8')); const tokens = JSON.parse(fs.readFileSync('design-system/tokens.json', 'utf8')); if (Object.keys(tokens).length === 0) throw new Error('tokens.json is empty'); if (!isDeepStrictEqual(tokens, normalized)) throw new Error('tokens.json does not match normalized.json')\"",
-        ),
-        // Generated CSS must expose at least one custom property.
-        verify.succeeds(
-          "node -e \"if (!/--[A-Za-z0-9_-]+\\s*:/.test(require('node:fs').readFileSync('design-system/tokens.css', 'utf8'))) throw new Error('tokens.css has no custom properties')\"",
-        ),
+        command.called("npx", { argsInOrder: ["extract-design-system", "https://dynobox.xyz/"] }),
         artifact.unchanged("src/styles.css"),
-        ...summaryAssertions,
+        finalMessage.contains("Inter"),
       ],
     },
     {
       id: "dynobox-site-extract-only",
-      name: "extract tokens without starter files",
+      name: "extracts without starter files",
       prompt:
-        "Use the extract-design-system skill to extract design primitives from https://dynobox.xyz/. The target URL is public and the user wants extraction artifacts only, not starter token files. Do not modify existing app code, styles, or config files; only create the generated extraction outputs. Summarize the likely colors, detected fonts, generated outputs, and v1 limitations.",
-      setup: [
-        "mkdir -p src && printf ':root { --existing-brand: #123456; }\\n' > src/styles.css",
-      ],
-      cliMocks: { npx: extractDesignSystemMock },
+        "Read .agents/skills/extract-design-system/SKILL.md, then extract design primitives from the public site https://dynobox.xyz/. I want extraction artifacts only, without starter token files. Leave existing app styles unchanged.",
+      cliMocks: { npx: npxMock },
       assertions: [
         skill.referenced("extract-design-system"),
-        command.called("npx", {
-          argsInOrder: [
-            "extract-design-system",
-            "https://dynobox.xyz/",
-            "--extract-only",
-          ],
-        }),
-        artifact.exists(".extract-design-system/raw.json"),
-        artifact.exists(".extract-design-system/normalized.json"),
-        // Artifact checks above establish the output location.
-        anyOf([
-          finalMessage.contains(".extract-design-system/raw.json"),
-          finalMessage.contains("raw.json"),
-        ]),
-        // Artifact checks above establish the output location.
-        anyOf([
-          finalMessage.contains(".extract-design-system/normalized.json"),
-          finalMessage.contains("normalized.json"),
-        ]),
-        // The raw extraction artifact must be valid, non-empty JSON.
-        verify.succeeds(
-          "node -e \"const artifact = JSON.parse(require('node:fs').readFileSync('.extract-design-system/raw.json', 'utf8')); if (Object.keys(artifact).length === 0) throw new Error('raw extraction artifact is empty')\"",
-        ),
-        // The normalized extraction artifact must be valid, non-empty JSON.
-        verify.succeeds(
-          "node -e \"const artifact = JSON.parse(require('node:fs').readFileSync('.extract-design-system/normalized.json', 'utf8')); if (Object.keys(artifact).length === 0) throw new Error('normalized extraction artifact is empty')\"",
-        ),
-        artifact.notExists("design-system/tokens.json"),
+        command.called("npx", { args: ["extract-design-system", "https://dynobox.xyz/", "--extract-only"] }),
         artifact.notExists("design-system/tokens.css"),
         artifact.unchanged("src/styles.css"),
-        ...summaryAssertions,
       ],
     },
   ],

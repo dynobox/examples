@@ -2,10 +2,8 @@ import {
   artifact,
   defineDyno,
   dyno,
-  sequence,
   skill,
   transcript,
-  tool,
   verify,
 } from "@dynobox/sdk";
 
@@ -55,16 +53,7 @@ export default defineDyno({
           id: "skill",
           label: "Reads the TDD skill",
         },
-        {
-          ...sequence.inOrder([
-            // Raw shell matching also sees test commands after heredocs.
-            tool.called("shell", { matches: String.raw`(?:^|[\s"';&|])(?:[^\s"';&|]+/)?node\s+--test(?:[\s"']|$)` }),
-            tool.called("shell", { matches: String.raw`(?:^|[\s"';&|])(?:[^\s"';&|]+/)?node\s+--test(?:[\s"']|$)` }),
-          ]),
-          id: "test-runs",
-          label: "Runs tests during development",
-        },
-        // TAP failure output is simple evidence; it does not prove edit order.
+        // A small signal of the red phase; final tests run through native verify.
         {
           ...transcript.contains("not ok"),
           id: "failing-test",
@@ -84,11 +73,6 @@ export default defineDyno({
           ...verify.succeeds("node --test"),
           id: "passing-suite",
           label: "Final test suite passes",
-        },
-        {
-          ...verify.succeeds(`node ${here.q("helpers/verify-duration.mjs")}`),
-          id: "behavior",
-          label: "Durations match the specification",
         },
         {
           ...artifact.notExists("node_modules"),

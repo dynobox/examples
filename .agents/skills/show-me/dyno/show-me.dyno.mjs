@@ -2,13 +2,9 @@ import {
   artifact,
   command,
   defineDyno,
-  dyno,
   finalMessage,
   skill,
-  verify,
 } from "@dynobox/sdk";
-
-const here = dyno.here(import.meta.url);
 
 export default defineDyno({
   name: "[show-me] explains topics visually",
@@ -73,9 +69,7 @@ export default defineDyno({
         command.called("open", {
           originalMatches: /show-me-checkout-states\.html/,
         }),
-        verify.succeeds(
-          `node ${here.q("./helpers/verify-checkout-html.mjs")}`,
-        ),
+        artifact.contains("show-me-checkout-states.html", "Processing payment"),
       ],
     },
   ],

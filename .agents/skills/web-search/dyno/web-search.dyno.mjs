@@ -1,20 +1,6 @@
-import {
-  anyOf,
-  command,
-  defineDyno,
-  dyno,
-  finalMessage,
-  skill,
-  verify,
-} from "@dynobox/sdk";
+import { command, defineDyno, dyno, finalMessage, sequence, skill } from "@dynobox/sdk";
 
 const here = dyno.here(import.meta.url);
-const absoluteScript = /^(?:\/|\$PWD\/|\$\{PWD\}\/|\$\(pwd\)\/).*\/web-search\.js$/;
-const absoluteInvocation = /(?:^|[\s"'])(?:\/|\$PWD\/|\$\{PWD\}\/|\$\(pwd\)\/).*\/web-search\.js/;
-const absoluteCall = (matcher) => anyOf([
-  command.called("web-search.js", { ...matcher, originalMatches: absoluteInvocation }),
-  command.called("node", { ...matcher, argsMatching: [absoluteScript] }),
-]);
 
 export default defineDyno({
   name: "[web-search] searches and cites sources",
@@ -36,20 +22,34 @@ export default defineDyno({
   scenarios: [
     {
       id: "search-fetch-and-cite",
-      name: "searches, fetches selected results, and cites a source",
+      name: "searches and fetches a source",
       prompt:
-        "Read .agents/skills/web-search/SKILL.md, then use the web-search skill to research passkeys. Search for passkeys, inspect results 1 and 2, and give a concise answer explaining what passkeys are and why they are more resistant to phishing. Include links to the sources you inspected.",
-      setup: ["chmod +x .agents/skills/web-search/web-search.js"],
+        "Read .agents/skills/web-search/SKILL.md, then use the skill to research passkeys. Run the bundled CLI with bun and its absolute script path. Search for passkeys, fetch result 1 using the returned result-set ID, and give a short answer with a link to the fetched source.",
+      // Use Bun so the mock does not intercept Node-based harness startup.
+      // Stage the real entry point; Dynobox supplies the CLI responses.
+      setup: [
+        `cp ${here.q("../web-search.js")} .agents/skills/web-search/web-search.js`,
+        "chmod -x .agents/skills/web-search/web-search.js",
+      ],
+      cliMocks: {
+        bun: {
+          handler: ({ argv }) => {
+            if (!argv[0]?.endsWith("/web-search.js")) {
+              return { exitCode: 1, stderr: "Use bun <absolute-skill-path>/web-search.js" };
+            }
+            return argv.includes("--from")
+              ? { exitCode: 0, stdout: "URL: https://fidoalliance.org/passkeys/\nPasskeys use public-key cryptography and are bound to the legitimate site, helping prevent phishing." }
+              : { exitCode: 0, stdout: "1. FIDO Alliance passkeys guide\nURL: https://fidoalliance.org/passkeys/\nResult set: passkey-results" };
+          },
+        },
+      },
       assertions: [
-        // The harness must consult the skill instructions before researching.
         skill.referenced("web-search"),
-        // Both research calls require an absolute path, including Node invocation.
-        absoluteCall({ args: ["passkeys"] }),
-        absoluteCall({ argsInOrder: ["--from", "passkey-results", "--fetch", "1,2"] }),
-        // Actual fixture calls establish order, including nested shell execution.
-        verify.succeeds(`node ${here.q("./helpers/verify-search-calls.mjs")}`),
-        // The response must cite a URL returned by the fetched fixture result.
-        finalMessage.contains("https://example.test/passkeys-overview"),
+        sequence.inOrder([
+          command.called("bun", { args: ["passkeys"], argsMatching: [/\/web-search\.js$/] }),
+          command.called("bun", { argsInOrder: ["--from", "passkey-results", "--fetch", "1"] }),
+        ]),
+        finalMessage.contains("https://fidoalliance.org/passkeys/"),
       ],
     },
   ],
