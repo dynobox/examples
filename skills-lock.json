@@ -25,6 +25,12 @@
       "skillPath": "plugins/show-me/skills/show-me/SKILL.md",
       "computedHash": "5442fbf32b2ecafa0cf85541deb810374e17883b4c6257e6950f573eafa51669"
     },
+    "tdd": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/tdd/SKILL.md",
+      "computedHash": "daf55026f456af104a72fa43247f7bcec89e5127316dc5b1b8d675d6a9d8ce94"
+    },
     "web-search": {
       "source": "ogulcancelik/agent-skills",
       "sourceType": "github",

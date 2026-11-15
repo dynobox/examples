@@ -2,30 +2,29 @@ import {
   artifact,
   command,
   defineDyno,
-  dyno,
   finalMessage,
   skill,
-  verify,
 } from "@dynobox/sdk";
-
-const here = dyno.here(import.meta.url);
 
 export default defineDyno({
   name: "[show-me] explains topics visually",
   target: "show-me",
   harnesses: [
-    {
-      id: "claude-code",
-      model: "sonnet",
-      permissionMode: "dangerous",
-    },
-    {
-      id: "codex",
-      model: "gpt-5.4-mini",
-      permissionMode: "dangerous",
-    },
+    { id: "claude-code", model: "haiku", permissionMode: "dangerous" },
+    { id: "codex", model: "gpt-6-luna", permissionMode: "dangerous" },
     {
       id: "opencode",
+      model: "openai/gpt-6-luna",
+      permissionMode: "dangerous",
+    },
+    {
+      id: "pi",
+      model: "anthropic/claude-haiku-5-5",
+      permissionMode: "dangerous",
+    },
+    {
+      id: "antigravity",
+      model: "gemini-3.8-flash-low",
       permissionMode: "dangerous",
     },
   ],
@@ -70,9 +69,7 @@ export default defineDyno({
         command.called("open", {
           originalMatches: /show-me-checkout-states\.html/,
         }),
-        verify.succeeds(
-          `node ${here.q("./helpers/verify-checkout-html.mjs")}`,
-        ),
+        artifact.contains("show-me-checkout-states.html", "Processing payment"),
       ],
     },
   ],

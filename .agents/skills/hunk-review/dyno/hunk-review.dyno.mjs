@@ -1,119 +1,74 @@
-import {
-  anyOf,
-  artifact,
-  command,
-  defineDyno,
-  finalMessage,
-  sequence,
-  skill,
-  verify,
-} from "@dynobox/sdk";
-import { hunkMock } from "./helpers/hunk-mock.mjs";
+import { anyOf, command, defineDyno, finalMessage, sequence, skill } from "@dynobox/sdk";
 
-const doesNotLaunchTui = command.notCalled("hunk", {
-  originalMatches: /^(?:.*[\\/])?hunk\s+(?:diff|show)(?:\s|$)/,
-});
+// All responses go through Dynobox's native CLI mock and call records.
+const hunkMock = {
+  handler: ({ argv, cwd }) => {
+    if (argv[1] === "list") {
+      return { exitCode: 0, stdout: JSON.stringify({ sessions: [{ sessionId: "review-1", path: cwd, repo: cwd }] }) };
+    }
+    if (argv[1] === "review") {
+      const hunk = { number: 1, oldStart: 10, newStart: 10 };
+      if (argv.includes("--include-patch")) {
+        hunk.patch = "@@ -10,3 +10,3 @@ function canManage(user) {\n-  return user.role === 'admin';\n+  return (user.role = 'admin');\n }";
+      }
+      return { exitCode: 0, stdout: JSON.stringify({ sessionId: "review-1", files: [{ path: "src/auth.js", hunks: [hunk] }] }) };
+    }
+    return { exitCode: 0, stdout: JSON.stringify({ sessionId: "review-1", file: "src/auth.js", hunk: 1, applied: 1 }) };
+  },
+};
 
 export default defineDyno({
-  name: "[hunk-review] controls live review sessions",
+  name: "[hunk-review] reviews live sessions",
   target: "hunk-review",
   harnesses: [
+    { id: "claude-code", model: "haiku", permissionMode: "dangerous" },
+    { id: "codex", model: "gpt-6-luna", permissionMode: "dangerous" },
     {
-      id: "claude-code",
-      model: "sonnet",
+      id: "opencode",
+      model: "openai/gpt-6-luna",
       permissionMode: "dangerous",
     },
     {
-      id: "codex",
-      model: "gpt-5.4-mini",
+      id: "pi",
+      model: "anthropic/claude-haiku-5-5",
+      permissionMode: "dangerous",
+    },
+    {
+      id: "antigravity",
+      model: "gemini-3.8-flash-low",
       permissionMode: "dangerous",
     },
   ],
   scenarios: [
     {
       id: "no-active-session",
-      name: "asks the user to launch Hunk when no session exists",
+      name: "reports that a session is needed",
       prompt:
-        "Read .agents/skills/hunk-review/SKILL.md, then review the current changes with Hunk. The Hunk CLI is available on PATH as hunk.",
-      setup: ["printf 'no-session\n' > .review-mode"],
-      cliMocks: { hunk: hunkMock },
+        "Read .agents/skills/hunk-review/SKILL.md, then review the current changes with Hunk. The CLI is available on PATH as hunk.",
+      cliMocks: { hunk: { response: { exitCode: 0, stdout: '{"sessions":[]}' } } },
       assertions: [
         skill.referenced("hunk-review"),
         command.called("hunk", { argsInOrder: ["session", "list"] }),
-        command.notCalled("hunk", {
-          argsInOrder: ["session", "comment"],
-        }),
-        doesNotLaunchTui,
-        finalMessage.contains("Hunk"),
+        command.notCalled("hunk", { argsInOrder: ["session", "comment"] }),
         finalMessage.contains("session"),
       ],
     },
     {
       id: "review-and-batch-comments",
-      name: "inspects structure and annotates review issues",
+      name: "reviews a session and adds a comment",
       prompt:
-        "Read .agents/skills/hunk-review/SKILL.md, then review the live Hunk session and annotate any issues you find. The Hunk CLI is available on PATH as hunk.",
-      setup: ["printf 'review\n' > .review-mode"],
+        "Read .agents/skills/hunk-review/SKILL.md, then review the live Hunk session and add a comment for any issue you find. The CLI is available on PATH as hunk.",
       cliMocks: { hunk: hunkMock },
       assertions: [
         skill.referenced("hunk-review"),
         sequence.inOrder([
           command.called("hunk", { argsInOrder: ["session", "list"] }),
-          command.called("hunk", {
-            originalMatches:
-              /^(?!.*--include-patch)(?:\.\/)?hunk\s+session\s+review\b.*--json(?:\s|$)/,
-          }),
-          command.called("hunk", {
-            args: ["session", "review", "--include-patch", "--json"],
-          }),
-          command.called("hunk", {
-            argsInOrder: ["session", "navigate"],
-          }),
+          command.called("hunk", { argsInOrder: ["session", "review"] }),
         ]),
         anyOf([
-          command.called("hunk", {
-            argsInOrder: ["session", "comment", "apply", "--stdin"],
-          }),
-          command.called("hunk", {
-            argsInOrder: ["session", "comment", "add"],
-          }),
+          command.called("hunk", { argsInOrder: ["session", "comment", "add"] }),
+          command.called("hunk", { argsInOrder: ["session", "comment", "apply"] }),
         ]),
-        doesNotLaunchTui,
-        artifact.exists(".hunk-comments.json"),
-        artifact.contains(".hunk-comments.json", "src/auth.js"),
-        artifact.contains(".hunk-comments.json", "src/jobs.js"),
-        // The mock records the simulated session's two expected review notes.
-        verify.succeeds(
-          "node -e \"const comments = JSON.parse(require('node:fs').readFileSync('.hunk-comments.json', 'utf8')).comments; if (comments.length !== 2) throw new Error('expected exactly two review comments')\"",
-        ),
-      ],
-    },
-    {
-      id: "tracked-changes-only",
-      name: "reloads a session without untracked files",
-      prompt:
-        "Read .agents/skills/hunk-review/SKILL.md, then update the live Hunk review to show tracked changes only. The Hunk CLI is available on PATH as hunk.",
-      setup: ["printf 'reload\n' > .review-mode"],
-      cliMocks: { hunk: hunkMock },
-      assertions: [
-        skill.referenced("hunk-review"),
-        sequence.inOrder([
-          command.called("hunk", { argsInOrder: ["session", "list"] }),
-          command.called("hunk", {
-            argsInOrder: [
-              "session",
-              "reload",
-              "--repo",
-              "--",
-              "diff",
-              "--exclude-untracked",
-            ],
-          }),
-        ]),
-        doesNotLaunchTui,
-        // The mock records the nested replacement command.
-        artifact.exists(".hunk-reload.json"),
-        artifact.contains(".hunk-reload.json", "--exclude-untracked"),
       ],
     },
   ],

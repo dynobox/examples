@@ -1,83 +1,62 @@
 # Example Skill Dynos
 
-This repository evaluates popular agent skills in isolated Dynobox workspaces. Dynos
-assert observable commands, generated artifacts, preservation of inputs, and
-the final response rather than only harness completion.
+Small examples of Dynobox features, using installed agent skills as realistic
+tasks. Each dyno checks a few observable behaviors. These examples demonstrate
+how to write a dyno; they do not aim for full skill coverage.
 
-Run the default skill suite:
+Run the examples:
 
 ```sh
 npm run dynobox
 ```
 
-For harness output and retained debug artifacts:
+Include harness output and debug artifact paths:
 
 ```sh
 npm run dynobox -- --debug
 ```
 
-The suite uses the Claude Code, Codex, and OpenCode harnesses.
+All dynos use Claude Code, Codex, Pi, and Antigravity (AGY). Some also use
+OpenCode or Cursor.
 
-## Coverage
+## Examples
 
-### extract-design-system
+Dynos live under `.agents/skills/<skill>/dyno/`.
 
-Source: <https://github.com/arvindrk/extract-design-system>
+| Skill | Dynobox features illustrated |
+| --- | --- |
+| [extract-design-system](https://github.com/arvindrk/extract-design-system) | A native CLI handler supplies extraction files; command and artifact assertions check the workflow and preserve existing styles. |
+| [hunk-review](https://github.com/modem-dev/hunk/tree/main/skills/hunk-review) | Static and handler CLI mocks, ordered command calls, and `anyOf` for alternative comment commands. |
+| [obsidian-markdown](https://github.com/kepano/obsidian-skills) | File creation, content checks, alternative valid embed paths, and unchanged source fixtures. |
+| [show-me](https://github.com/humanlayer/skills/tree/main/plugins/show-me/skills/show-me) | Final-message assertions for text and Mermaid, an HTML artifact, and a static mock for `open`. |
+| [tdd](https://github.com/mattpocock/skills/tree/main/skills/engineering/tdd) | Feature and bug-fix tasks with transcript checks, preserved tests, and native verification using `node --test`. |
+| [web-search](https://github.com/ogulcancelik/agent-skills/tree/main/skills/web-search) | Native CLI responses, search-before-fetch command order, and a source link in the final answer. |
 
-`extract-design-system/dyno/extract-design-system.dyno.mjs` covers starter-token
-generation and extraction-only mode against `https://dynobox.xyz/`. A
-scenario-scoped `npx` mock makes browser installation and extraction deterministic
-while verifying the required commands, valid and non-empty JSON outputs, CSS
-custom properties, preservation of existing styles, and a summary of colors,
-fonts, and limitations.
+External CLI responses are declared in each dyno's `cliMocks`. Dynobox records
+mock calls for command and sequence assertions. There are no custom call logs,
+mock executables, or verification helper programs.
 
-### hunk-review
-
-Source: <https://github.com/modem-dev/hunk/tree/main/skills/hunk-review>
-
-`hunk-review/dyno/hunk-review.dyno.mjs` uses a scenario-scoped Hunk CLI mock to
-cover no-session handling, structure-first review, navigation before inline
-comments, the prohibition on launching the interactive TUI, and tracked-only
-session reloads. It tests the agent workflow without requiring a live Hunk daemon
-or a fixture executable.
-
-### obsidian-markdown
-
-Source: <https://github.com/kepano/obsidian-skills>
-
-`obsidian-markdown/dyno/obsidian-markdown.dyno.mjs` creates project, reference,
-and decision-record notes. It verifies parsed frontmatter, wikilinks, embeds,
-callouts, collapsible content, block IDs, hidden comments, and connected Mermaid
-flow while allowing only the requested note to be created.
-
-### show-me
-
-Source: <https://github.com/humanlayer/skills/tree/main/plugins/show-me/skills/show-me>
-
-`show-me/dyno/show-me.dyno.mjs` covers focused pseudocode, Mermaid sequence
-diagrams, and responsive HTML visualizations. It verifies the selected visual
-format, preserves the source fixtures, creates and opens the HTML artifact, and
-checks its essential document structure and responsive metadata.
-
-### web-search
-
-Source: <https://github.com/ogulcancelik/agent-skills/tree/main/skills/web-search>
-
-`web-search/dyno/web-search.dyno.mjs` demonstrates the core research workflow
-with a deterministic CLI fixture. It verifies that the agent consults the
-skill, uses the bundled CLI by absolute path, searches before fetching selected
-results with the returned result-set ID, avoids `./web-search.js`, and cites a
-URL from a fetched fixture result. It tests the agent workflow, not live browser
-or search-engine behavior.
+The TDD fixtures contain ordinary project tests because writing and fixing tests
+is the task. Dynobox runs the resulting suite with `verify.succeeds("node --test")`.
 
 ## Authoring
 
-Validate a dyno without invoking a harness:
+Use `[skill] description` for the dyno name, with a lowercase action such as
+`[tdd] fixes a bug`. Set the target to the skill directory name, such as `tdd`.
+Dynos for the same skill share a target and use different descriptions.
+
+Keep scenarios short. Start with `skill.referenced(...)` and add a few native
+command, artifact, or final-message assertions that show the behavior of interest.
+Use `sequence.inOrder` when order is the point, and `verify.succeeds` when a
+project command can check the result.
+
+Validate without invoking a harness:
 
 ```sh
-node --check path/to/test.dyno.mjs
-npx dynobox validate path/to/test.dyno.mjs
+node --check path/to/example.dyno.mjs
+npx dynobox validate path/to/example.dyno.mjs
 ```
 
-Dynobox stages the authored `SKILL.md` in both `.agents` and `.claude` skill
-layouts so each supported harness can discover it natively.
+Dynobox copies adjacent fixtures into each workspace and stages the authored
+`SKILL.md` in both `.agents` and `.claude` layouts. Copy supporting skill
+references in `setup` when the example needs them.
