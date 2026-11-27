@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Dynobox help</title>
+  </head>
+  <body data-user="test@dynobox.xyz">
+    <h1>Ask Dynobox support</h1>
+    <form id="ask">
+      <input name="question" placeholder="Ask a question" required />
+      <button>Ask</button>
+    </form>
+    <p id="answer"></p>
+    <script type="module">
+      // Browser code: it sends the question to the server function in api/ask.js.
+      document.querySelector("#ask").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const question = new FormData(event.target).get("question");
+        const response = await fetch("/api/ask", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ userId: document.body.dataset.user, question }),
+        });
+        document.querySelector("#answer").textContent = (await response.json()).answer;
+      });
+    </script>
+  </body>
+</html>
