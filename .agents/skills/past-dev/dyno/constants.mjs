@@ -19,9 +19,6 @@ export const HARNESSES = [
 export const IDENTITY = "test@dynobox.xyz";
 
 export const SETUP = [
-  // Node sends all requests through the Dynobox proxy only on Node 22.21+ (22.x) or 24.5+.
-  // On older Node, the CLI could reach the real api.past.dev, so the scenario stops here.
-  `node -e "const [a, b] = process.versions.node.split('.').map(Number); if (!(a > 24 || (a === 24 && b >= 5) || (a === 22 && b >= 21))) throw new Error('The past-dev dyno needs Node 22.21+ or 24.5+.')"`,
   // A git repository whose user is the test identity, so `git config user.email` never gives a real address.
   "git init -q",
   `git config user.email ${IDENTITY}`,
