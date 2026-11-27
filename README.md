@@ -28,15 +28,16 @@ Dynos live under `.agents/skills/<skill>/dyno/`.
 | [extract-design-system](https://github.com/arvindrk/extract-design-system) | A native CLI handler supplies extraction files; command and artifact assertions check the workflow and preserve existing styles. |
 | [hunk-review](https://github.com/modem-dev/hunk/tree/main/skills/hunk-review) | Static and handler CLI mocks, ordered command calls, and `anyOf` for alternative comment commands. |
 | [obsidian-markdown](https://github.com/kepano/obsidian-skills) | File creation, content checks, alternative valid embed paths, and unchanged source fixtures. |
-| [past-dev](https://past.dev/SKILL.md) | The skill comes from its website, not a local copy. Multi-turn `user.replies` for approvals and the claim code, a handler CLI mock with the real CLI's output text, `sequence.inOrder` for send-wait-recall, and a prompt-injection check on recall output. |
+| [past-dev](https://past.dev/SKILL.md) | The skill comes from its website, not a local copy. The real past-dev CLI runs against an `httpMocks` handler for its API, which recalls a ticket only after it was sent and its ingestion finished. HTTP assertions check what reached the API, multi-turn `user.replies` give the approvals, and a recall result with an injected instruction checks that nothing goes to another host. Needs Node 22.21+ or 24.5+. |
 | [show-me](https://github.com/humanlayer/skills/tree/main/plugins/show-me/skills/show-me) | Final-message assertions for text and Mermaid, an HTML artifact, and a static mock for `open`. |
 | [tdd](https://github.com/mattpocock/skills/tree/main/skills/engineering/tdd) | Feature and bug-fix tasks with transcript checks, preserved tests, and native verification using `node --test`. |
 | [web-search](https://github.com/ogulcancelik/agent-skills/tree/main/skills/web-search) | Native CLI responses, search-before-fetch command order, and a source link in the final answer. |
 
 External CLI responses are declared in each dyno's `cliMocks`. Dynobox records
 mock calls for command and sequence assertions. There are no custom call logs,
-mock executables, or verification helper programs. The past-dev dyno keeps its
-mock handler and fixed data in plain modules next to the dyno file.
+mock executables, or verification helper programs. The past-dev dyno mocks an
+HTTP API with `httpMocks` instead, and keeps its mock handler and fixed data in
+plain modules next to the dyno file.
 
 The TDD fixtures contain ordinary project tests because writing and fixing tests
 is the task. Dynobox runs the resulting suite with `verify.succeeds("node --test")`.
