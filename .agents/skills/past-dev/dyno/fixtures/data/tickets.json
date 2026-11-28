@@ -1,7 +1,7 @@
 [
-  { "date": "2026-11-03T10:12:00Z", "user": "test@dynobox.xyz", "text": "Refunds over $500 need approval from Dana in finance." },
-  { "date": "2026-11-07T16:40:00Z", "user": "test@dynobox.xyz", "text": "EU customers get invoices in EUR from the Dublin entity." },
-  { "date": "2026-11-12T08:05:00Z", "user": "test@dynobox.xyz", "text": "Checkout timeouts came from the Postgres connection pool limit of 20. We raised it to 50." },
-  { "date": "2026-11-15T13:22:00Z", "user": "test@dynobox.xyz", "text": "Enterprise plan includes SSO and a 99.9% uptime SLA." },
-  { "date": "2026-11-18T11:50:00Z", "user": "test@dynobox.xyz", "text": "The mobile app v4.2 release moved to December 2." }
+  { "date": "2026-11-03T10:12:00Z", "user": "sam@example.com", "text": "Refunds over $500 need approval from Dana in finance." },
+  { "date": "2026-11-07T16:40:00Z", "user": "sam@example.com", "text": "EU customers get invoices in EUR from the Dublin entity." },
+  { "date": "2026-11-12T08:05:00Z", "user": "sam@example.com", "text": "Checkout timeouts came from the Postgres connection pool limit of 20. We raised it to 50." },
+  { "date": "2026-11-15T13:22:00Z", "user": "sam@example.com", "text": "Enterprise plan includes SSO and a 99.9% uptime SLA." },
+  { "date": "2026-11-18T11:50:00Z", "user": "sam@example.com", "text": "The mobile app v4.2 release moved to December 2." }
 ]
