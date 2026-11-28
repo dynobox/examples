@@ -1,5 +1,5 @@
 // A mock of api.past.dev for Dynobox `httpMocks`. The real past-dev CLI runs against it, and no call reaches past.dev.
-// Each answer has the fields that past-dev@0.1.0 reads. The claim routes are not mocked: they answer 404.
+// Each answer has the fields that past-dev@0.2.0 reads. The claim routes are not mocked: they answer 404.
 import { randomUUID } from "node:crypto";
 import { CLAIM_TOKEN, CONSOLE_URL, DELETED, MADE, PROJECT_SLUG, UNCLAIMED_KEY } from "./constants.mjs";
 

@@ -67,7 +67,7 @@ export const CLAIM_TOKEN = "past_ct_WqdlLyZ1e4uuZBGEQ-jozwLHHpIS3mYvmSfolW2OWw8"
 export const PROJECT_SLUG = "support-bot-4be19c07";
 export const CONSOLE_URL = "https://app.past.dev";
 
-// The claim file as past-dev@0.1.0 init writes it. The CLI uses it only when every field is valid,
+// The claim file as past-dev@0.2.0 init writes it. The CLI uses it only when every field is valid,
 // and the key's sha256 matches the key in .env.
 const CLAIM_FILE = JSON.stringify({
   version: 1,
