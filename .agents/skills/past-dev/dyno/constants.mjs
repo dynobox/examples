@@ -15,14 +15,15 @@ export const HARNESSES = [
   { id: "antigravity", model: "gemini-3.8-flash-low", permissionMode: "dangerous" },
 ];
 
-// The person who asks: the --identity for ingest and recall.
-export const IDENTITY = "test@dynobox.xyz";
+// The person who asks: the --identity for ingest and recall. example.com is reserved for examples, so it is
+// never a real address. The fixtures do not name the test tool: an agent that sees it calls the key fake.
+export const IDENTITY = "sam@example.com";
 
 export const SETUP = [
   // A git repository whose user is the test identity, so `git config user.email` never gives a real address.
   "git init -q",
   `git config user.email ${IDENTITY}`,
-  "git config user.name 'Dynobox Test'",
+  "git config user.name 'Sam Lee'",
 ];
 
 // --- past.dev pages ---
@@ -39,7 +40,7 @@ export const FULL_SETUP_TEXT = "Nothing goes out before I approve the plan";
 
 // --- Dates ---
 
-// A day as an agent may write it: 2026-11-26, November 26 or Nov 26.
+// A day as an agent may write it: 2026-12-04, December 4 or Dec 4.
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 function dayFormats(iso) {
   const date = new Date(iso);
@@ -47,9 +48,12 @@ function dayFormats(iso) {
   return [iso.slice(0, 10), `${month} ${day}`, `${month.slice(0, 3)} ${day}`];
 }
 
-// The mock project is made on 2026-11-19 and deleted 7 days later.
-export const MADE = "2026-11-19T18:00:00Z";
-export const DELETED = "2026-11-26T18:00:00Z";
+// The mock project was made at noon UTC on the day before the run, and it is deleted 7 days after it was made.
+// The dates come from the clock, so the deletion date is never in the past. At noon UTC the deletion day is
+// the same in almost every time zone, so an agent that converts the time to local time writes the same day.
+const DAY = 24 * 3600 * 1000;
+export const MADE = new Date(Math.floor(Date.now() / DAY) * DAY - DAY / 2).toISOString();
+export const DELETED = new Date(Date.parse(MADE) + 7 * DAY).toISOString();
 export const DELETION_DATES = dayFormats(DELETED);
 
 const tickets = JSON.parse(readFileSync(new URL("./fixtures/data/tickets.json", import.meta.url), "utf8"));
@@ -63,7 +67,7 @@ export const CLAIM_TOKEN = "past_ct_WqdlLyZ1e4uuZBGEQ-jozwLHHpIS3mYvmSfolW2OWw8"
 export const PROJECT_SLUG = "support-bot-4be19c07";
 export const CONSOLE_URL = "https://app.past.dev";
 
-// The claim file as past-dev@0.1.0 init writes it. The CLI uses it only when every field is valid,
+// The claim file as past-dev@0.2.0 init writes it. The CLI uses it only when every field is valid,
 // and the key's sha256 matches the key in .env.
 const CLAIM_FILE = JSON.stringify({
   version: 1,
